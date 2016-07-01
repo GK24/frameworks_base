@@ -1357,7 +1357,11 @@ struct ResTable_entry
         // If set, this is a weak resource and may be overriden by strong
         // resources of the same name/type. This is only useful during
         // linking with other resource tables.
-        FLAG_WEAK = 0x0004
+        FLAG_WEAK = 0x0004,
+        // If set, this resource has been declared OK to overlay, so overlay
+        // packages may be added to the resource table to provide alternative
+        // resource values.
+        FLAG_OVERLAY = 0x0008,
     };
     uint16_t flags;
     
@@ -1541,20 +1545,21 @@ class ResTable
 {
 public:
     ResTable();
-    ResTable(const void* data, size_t size, const int32_t cookie,
+    ResTable(const void* data, size_t size, const int32_t cookie=-1,
              bool copyData=false);
     ~ResTable();
 
     status_t add(const void* data, size_t size, const int32_t cookie=-1, bool copyData=false);
     status_t add(const void* data, size_t size, const void* idmapData, size_t idmapDataSize,
-            const int32_t cookie=-1, bool copyData=false, const uint32_t pkgIdOverride=0);
+        const int32_t cookie, bool copyData);
 
     status_t add(Asset* asset, const int32_t cookie=-1, bool copyData=false);
-    status_t add(Asset* asset, Asset* idmapAsset, const int32_t cookie=-1, bool copyData=false,
-            const uint32_t pkgIdOverride=0);
+    status_t add(Asset* asset, Asset* idmapAsset, const int32_t cookie, bool copyData);
 
     status_t add(ResTable* src);
-    status_t addEmpty(const int32_t cookie);
+    status_t addEmpty(const int32_t cookie=-1);
+
+    status_t remove(const int32_t cookie);
 
     status_t getError() const;
 
@@ -1819,6 +1824,9 @@ public:
 
     const DynamicRefTable* getDynamicRefTableForCookie(int32_t cookie) const;
 
+    // Return the index in mHeader corresponding to the asset with cookie 'cookie'
+    ssize_t cookieToHeaderIndex(int32_t cookie) const;
+
     // Return the configurations (ResTable_config) that we know about
     void getConfigurations(Vector<ResTable_config>* configs, bool ignoreMipmap=false) const;
 
@@ -1834,14 +1842,14 @@ public:
             const char* targetPath, const char* overlayPath,
             void** outData, size_t* outSize) const;
 
-    static const size_t IDMAP_HEADER_SIZE_BYTES = 4 * sizeof(uint32_t) + 2 * 256;
+    static const size_t IDMAP_HEADER_SIZE_BYTES = 5 * sizeof(uint32_t) + 2 * 256;
 
     // Retrieve idmap meta-data.
     //
     // This function only requires the idmap header (the first
     // IDMAP_HEADER_SIZE_BYTES) bytes of an idmap file.
     static bool getIdmapInfo(const void* idmap, size_t size,
-            uint32_t* pVersion,
+            uint32_t* pVersion, uint32_t* pDangerous,
             uint32_t* pTargetCrc, uint32_t* pOverlayCrc,
             String8* pTargetPath, String8* pOverlayPath);
 
@@ -1858,8 +1866,8 @@ private:
     typedef Vector<Type*> TypeList;
 
     status_t addInternal(const void* data, size_t size, const void* idmapData, size_t idmapDataSize,
-            const int32_t cookie, bool copyData, const uint32_t pkgIdOverride);
-
+             const int32_t cookie, bool copyData);
+	
     ssize_t getResourcePackageIndex(uint32_t resID) const;
 
     status_t getEntry(
@@ -1870,12 +1878,13 @@ private:
     uint32_t findEntry(const PackageGroup* group, ssize_t typeIndex, const char16_t* name,
             size_t nameLen, uint32_t* outTypeSpecFlags) const;
 
-    status_t parsePackage(
-        const ResTable_package* const pkg, const Header* const header,
-        const uint32_t pkgIdOverride);
+	status_t parsePackage(
+        const ResTable_package* const pkg, const Header* const header);
 
     void print_value(const Package* pkg, const Res_value& value) const;
     
+    void verifyInvariants() const;
+
     mutable Mutex               mLock;
 
     status_t                    mError;

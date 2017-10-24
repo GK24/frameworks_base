@@ -1551,10 +1551,10 @@ public:
 
     status_t add(const void* data, size_t size, const int32_t cookie=-1, bool copyData=false);
     status_t add(const void* data, size_t size, const void* idmapData, size_t idmapDataSize,
-        const int32_t cookie, bool copyData);
+            const int32_t cookie=-1, bool copyData=false);
 
     status_t add(Asset* asset, const int32_t cookie=-1, bool copyData=false);
-    status_t add(Asset* asset, Asset* idmapAsset, const int32_t cookie, bool copyData);
+    status_t add(Asset* asset, Asset* idmapAsset, const int32_t cookie=-1, bool copyData=false);
 
     status_t add(ResTable* src);
     status_t addEmpty(const int32_t cookie=-1);
@@ -1867,7 +1867,7 @@ private:
 
     status_t addInternal(const void* data, size_t size, const void* idmapData, size_t idmapDataSize,
              const int32_t cookie, bool copyData);
-	
+
     ssize_t getResourcePackageIndex(uint32_t resID) const;
 
     status_t getEntry(
@@ -1878,7 +1878,7 @@ private:
     uint32_t findEntry(const PackageGroup* group, ssize_t typeIndex, const char16_t* name,
             size_t nameLen, uint32_t* outTypeSpecFlags) const;
 
-	status_t parsePackage(
+    status_t parsePackage(
         const ResTable_package* const pkg, const Header* const header);
 
     void print_value(const Package* pkg, const Res_value& value) const;

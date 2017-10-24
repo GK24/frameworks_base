@@ -736,9 +736,11 @@ bool addTagAttribute(const sp<XMLNode>& node, const char* ns8,
             return false;
         }
 
+#ifdef SHOW_MANIFEST_WARNING
         fprintf(stderr, "Warning: AndroidManifest.xml already defines %s (in %s);"
                         " using existing value in manifest.\n",
                 String8(attr).string(), String8(ns).string());
+#endif
 
         // don't stop the build.
         return true;
@@ -1170,9 +1172,7 @@ status_t buildResources(Bundle* bundle, const sp<AaptAssets>& assets, sp<ApkBuil
         packageType = ResourceTable::AppFeature;
     }
 
-    int extendedPackageId = bundle->getExtendedPackageId();
-
-    ResourceTable table(bundle, String16(assets->getPackage()), packageType, extendedPackageId);
+    ResourceTable table(bundle, String16(assets->getPackage()), packageType);
     err = table.addIncludedResources(bundle, assets);
     if (err != NO_ERROR) {
         return err;
@@ -2525,7 +2525,7 @@ static status_t writeSymbolClass(
             fprintf(fp,
                     "%s/** %s\n",
                     getIndentSpace(indent), cmt.string());
-        } else if (sym.isPublic && !includePrivate) {
+        } else if (sym.isPublic && !includePrivate && kIsDebug) {
             sym.sourcePos.warning("No comment for public symbol %s:%s/%s",
                 assets->getPackage().string(), className.string(),
                 String8(sym.name).string());
@@ -2571,7 +2571,7 @@ static status_t writeSymbolClass(
                      "%s */\n",
                     getIndentSpace(indent), cmt.string(),
                     getIndentSpace(indent));
-        } else if (sym.isPublic && !includePrivate) {
+        } else if (sym.isPublic && !includePrivate && kIsDebug) {
             sym.sourcePos.warning("No comment for public symbol %s:%s/%s",
                 assets->getPackage().string(), className.string(),
                 String8(sym.name).string());

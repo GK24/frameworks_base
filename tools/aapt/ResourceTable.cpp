@@ -1789,8 +1789,7 @@ status_t compileResourceFile(Bundle* bundle,
     return hasErrors ? STATUST(UNKNOWN_ERROR) : NO_ERROR;
 }
 
-ResourceTable::ResourceTable(Bundle* bundle, const String16& assetsPackage,
-                             ResourceTable::PackageType type, ssize_t pkgIdOverride)
+ResourceTable::ResourceTable(Bundle* bundle, const String16& assetsPackage, ResourceTable::PackageType type)
     : mAssetsPackage(assetsPackage)
     , mPackageType(type)
     , mTypeIdOffset(0)
@@ -1816,11 +1815,6 @@ ResourceTable::ResourceTable(Bundle* bundle, const String16& assetsPackage,
             assert(0);
             break;
     }
-
-    if (pkgIdOverride != 0) {
-        packageId = pkgIdOverride;
-    }
-
     sp<Package> package = new Package(mAssetsPackage, packageId);
     mPackages.add(assetsPackage, package);
     mOrderedPackages.add(package);
@@ -2895,9 +2889,8 @@ status_t ResourceTable::flatten(Bundle* bundle, const sp<const ResourceFilter>& 
     for (size_t i = 0; i < basePackageCount; i++) {
         size_t packageId = table.getBasePackageId(i);
         String16 packageName(table.getBasePackageName(i));
-        if (packageId > 0x01 && packageId != 0x7f && packageId != 0x37 &&
-                packageName != String16("android")
-                && packageName != String16("org.slim.framework")) {
+        if (packageId > 0x01 && packageId != 0x7f &&
+                packageName != String16("android")) {
             libraryPackages.add(sp<Package>(new Package(packageName, packageId)));
         }
     }
